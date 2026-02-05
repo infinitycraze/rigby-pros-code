@@ -10,8 +10,8 @@ extern pros::Motor intake_motor;
 extern pros::Motor lift_motor;
 
 extern int intake_volt;
-extern int slow_intake_volt;
 extern int lift_volt;
-extern int slow_lift_volt;
+
+extern float slow_mult;
 
 #endif

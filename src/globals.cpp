@@ -12,7 +12,6 @@ pros::Motor intake_motor({13});
 pros::Motor lift_motor({19});
 
 int intake_volt = 12000;
-int slow_intake_volt = 12000;
-int lift_volt = 12000;
-int slow_lift_volt = 12000;
+int lift_volt = 8000;
 
+float slow_mult = 0.5f;

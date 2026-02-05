@@ -75,8 +75,14 @@ void autonomous() {
 
 void opcontrol() {
     pros::Controller master(pros::E_CONTROLLER_MASTER);
+
+    // Everything is off because the bot just started
     bool intake_active, intake_rev, lift_active, lift_rev; 
     intake_active = intake_rev = lift_active = lift_rev = false;
+
+    float intake_slow = 1.0f; 
+    float lift_slow = 1.0f;
+
 
     while (true) {
         
@@ -86,58 +92,102 @@ void opcontrol() {
             pros::delay(20); // Wait and let the auton task work (ms)
             continue;        // Skip the rest of the loop
         }
-
-        // Intake Logic
+        
+        
         if (master.get_digital_new_press(DIGITAL_UP)) {
-            intake_rev = !intake_rev;
-            if (intake_active) {
-                if (!intake_rev) {
-                    intake_motor.move_voltage(intake_volt);
-                } else {
-                    intake_motor.move_voltage(-intake_volt);
-                }
+            if (intake_slow == 1.0f) {
+                intake_slow *= slow_mult;
+            } else {
+                intake_slow = 1.0f;
+            }
+            // update intake speed
+            if (!intake_rev) {
+                intake_motor.move_voltage(intake_volt * intake_slow);
+            } else {
+                intake_motor.move_voltage(-intake_volt * intake_slow);
             }
         }
 
-        if (master.get_digital_new_press(DIGITAL_R1)) {
-            intake_active = !intake_active;
+        if (master.get_digital_new_press(DIGITAL_RIGHT)) {
+            if (lift_slow == 1.0f) {
+                lift_slow *= slow_mult;
+            } else {
+                lift_slow = 1.0f;
+            }
+            // update lift speed
+            if (!lift_rev) {
+                lift_motor.move_voltage(lift_volt * lift_slow);
+            } else {
+                lift_motor.move_voltage(-lift_volt * lift_slow);
+            }
         }
 
+        // Intake Logic
+
+        // When user presses L2 activates reverse
+        if (master.get_digital_new_press(DIGITAL_L2)) {
+            intake_rev = true;
+            if (intake_active) {
+                intake_motor.move_voltage(-intake_volt * intake_slow);
+            }
+        }
+
+        if (master.get_digital_new_release(DIGITAL_L2)) {
+            intake_rev = false;
+            if (intake_active) {
+                intake_motor.move_voltage(intake_volt * intake_slow);
+            }
+        }
+        
+        // Toggle on/off intake
+        if (master.get_digital_new_press(DIGITAL_L1)) {
+            intake_active = !intake_active;
+        }
+        
+        // Turns the intake on/off/slow/reverse based on the variables
         if (intake_active) {
-            intake_motor.move_voltage(intake_volt);
+            if (!intake_rev) {
+                intake_motor.move_voltage(intake_volt * intake_slow);
+            } else {
+                intake_motor.move_voltage(-intake_volt * intake_slow);
+            }
         } else {
             intake_motor.move_voltage(0);
         }
 
         // Lifting
 
-        if (master.get_digital_new_press(DIGITAL_RIGHT)) {
-            lift_rev = !lift_rev;
+
+        // When user presses R2 activates reverse
+        if (master.get_digital_new_press(DIGITAL_R2)) {
+            lift_rev = true;
             if (lift_active) {
-                if (!lift_rev) {
-                    lift_motor.move_voltage(intake_volt);
-                } else {
-                    lift_motor.move_voltage(-intake_volt);
-                }
+                lift_motor.move_voltage(-lift_volt * lift_slow);
             }
         }
 
-        if (master.get_digital_new_press(DIGITAL_L1)) {
+        // deactivates when user releases R2
+        if (master.get_digital_new_release(DIGITAL_R2)) {
+            lift_rev = false;
+            if (lift_active) {
+                lift_motor.move_voltage(lift_volt * lift_slow);
+            }
+        }
+
+        // Toggle on/off lift
+        if (master.get_digital_new_press(DIGITAL_R1)) {
             lift_active = !lift_active;
         }
 
         if (lift_active) {
             if (!lift_rev) {
-                lift_motor.move_voltage(lift_volt);
+                lift_motor.move_voltage(lift_volt * lift_slow);
             } else {
-                lift_motor.move_voltage(-lift_volt);
+                lift_motor.move_voltage(-lift_volt * lift_slow);
             }
         } else {
             lift_motor.move_voltage(0);
         }
-
-        // TODO - implement slow motor logic
-
 
         // Drive Logic
         int dir = master.get_analog(ANALOG_LEFT_Y);    
