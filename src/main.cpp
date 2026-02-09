@@ -10,7 +10,9 @@
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-	create_auton_selector();
+    // Print a simple Hello World message on startup
+    printf("Hello World!\n");
+    create_auton_selector();
 }
 
 /**
